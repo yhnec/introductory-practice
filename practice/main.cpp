@@ -313,24 +313,16 @@ int Parse_line(char* line, Aircraft &arr) {
     arr.boarding_min = m;
 
     // Проверка лишних символов в конце строки
+    while (line[pos] == ' ') pos++;
+
     if (line[pos] != '\0')
     {
-        while (line[pos] != '\0')
+        if (error_code != 0)
         {
-            if (line[pos] == ' ') pos++;
-            else
-            {
-                if (line[pos] == '\0')
-                {
-                    if (error_code != 0)
-                    {
-                        return error_code;
-                    } else
-                    {
-                        return 12;
-                    }
-                }
-            }
+            return error_code;
+        } else
+        {
+            return 12;
         }
     }
     return error_code; // 0, если ошибок не было
