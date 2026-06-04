@@ -47,9 +47,9 @@ int Read_data(const char* file_name, Aircraft *&all_arr,
 int Parse_line(char* line, Aircraft &arr);
 
 // Функция для копирования полей
-void CopyToAll(Aircraft& dest, const Aircraft& src, bool valid);
+void Copy_All(Aircraft& dest, const Aircraft& src, bool valid);
 // Проверка дубликатов
-int CheckDuplicates(Aircraft *arr, int valid_count, Aircraft &new_aircraft, char* break_str);
+int Check_duplicates(Aircraft *arr, int valid_count, Aircraft &new_aircraft, char* break_str);
 // Функция проверяет коректность бортового номера.
 int Check_tail_number(char* num);
 // Функция проверять корректность номера рейса
@@ -147,7 +147,7 @@ int Read_data(const char* file_name, Aircraft *&all_arr,
 
         if (line_error != 0) { // Строка некорректна
             // Копируем поля из temp (частичные) и помечаем как невалидную
-            CopyToAll(all_arr[idx], temp, false);
+            Copy_All(all_arr[idx], temp, false);
 
             Print_message(line_error, temp.brand);
             cout << " (Строка " << line_number << ")" << endl;
@@ -157,10 +157,10 @@ int Read_data(const char* file_name, Aircraft *&all_arr,
 
         // Проверка дубликатов (только среди корректных)
         char dup_brand[max_len]; // Марка ЛА дубликата
-        int dup_error = CheckDuplicates(valid_arr, valid_count, temp, dup_brand);
+        int dup_error = Check_duplicates(valid_arr, valid_count, temp, dup_brand);
         if (dup_error != 0) {
             // Дубликат – не добавляем в valid_arr, но в all_arr сохраняем
-            CopyToAll(all_arr[idx], temp, false);
+            Copy_All(all_arr[idx], temp, false);
 
             Print_message(dup_error, dup_brand);
             cout << " (Строка " << line_number << ")" << endl;
@@ -169,7 +169,7 @@ int Read_data(const char* file_name, Aircraft *&all_arr,
         }
 
         // Полностью корректная и уникальная строка
-        CopyToAll(all_arr[idx], temp, true);
+        Copy_All(all_arr[idx], temp, true);
 
         // Добавляем в массив для сортировки
         valid_arr[valid_count] = temp;
@@ -185,7 +185,7 @@ int Read_data(const char* file_name, Aircraft *&all_arr,
 }
 
 // Вспомогательная функция для копирования полей из src в dest
-void CopyToAll(Aircraft& dest, const Aircraft& src, bool valid) {
+void Copy_All(Aircraft& dest, const Aircraft& src, bool valid) {
     strcpy(dest.brand, src.brand);
     strcpy(dest.tail_number, src.tail_number);
     dest.flight_number = src.flight_number;
@@ -194,7 +194,7 @@ void CopyToAll(Aircraft& dest, const Aircraft& src, bool valid) {
     dest.is_valid = valid;
 }
 
-int CheckDuplicates(Aircraft *arr, int valid_count, Aircraft &new_aircraft, char* break_str) {
+int Check_duplicates(Aircraft *arr, int valid_count, Aircraft &new_aircraft, char* break_str) {
     for (int k = 0; k < valid_count; k++)
     {// Начало цикла обработки строк
         // 1) Одинаковый бортовой номер
@@ -249,7 +249,7 @@ int Parse_line(char* line, Aircraft &arr) {
             return error_code;
         } else
         {
-            return 5;
+            return 7;
         }
     }
 
@@ -270,7 +270,7 @@ int Parse_line(char* line, Aircraft &arr) {
             return error_code;
         } else
         {
-            return 5;
+            return 7;
         }
     }
 
@@ -293,7 +293,7 @@ int Parse_line(char* line, Aircraft &arr) {
             return error_code;
         } else
         {
-            return 5;
+            return 7;
         }
     }
 
@@ -327,6 +327,7 @@ int Parse_line(char* line, Aircraft &arr) {
     }
     return error_code; // 0, если ошибок не было
 }
+
 int Check_tail_number(char* num) {
     const int len_tail = 4; // Количество цифр в бортовом номере
     if (num == nullptr || num[0] == '\0') return 1;
