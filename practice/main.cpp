@@ -26,7 +26,7 @@
 using namespace std;
 
 const int max_len = 100;
-const char filename[] = "tests/test1.txt";
+const char filename[] = "tests/test14.txt";
 
 typedef struct {
     char brand[max_len]; // Марка ЛА
@@ -145,7 +145,11 @@ int Read_data(const char* file_name, Aircraft *&all_arr,
 
         int line_error = Parse_line(extra_s, temp);// Обработка строки
 
-        if (line_error != 0) { // Строка некорректна
+        if (line_error == 12) {
+            Print_message(line_error, temp.brand);
+            cout << " (Строка " << line_number << ")" << endl;
+        }
+        else if (line_error != 0) { // Строка некорректна
             // Копируем поля из temp (частичные) и помечаем как невалидную
             Copy_All(all_arr[idx], temp, false);
 
@@ -154,6 +158,7 @@ int Read_data(const char* file_name, Aircraft *&all_arr,
             idx++;
             continue;
         }
+
 
         // Проверка дубликатов (только среди корректных)
         char dup_brand[max_len]; // Марка ЛА дубликата
@@ -261,8 +266,10 @@ int Parse_line(char* line, Aircraft &arr) {
         arr.tail_number[i++] = line[pos++];
     }
     arr.tail_number[i] = '\0';
+
     int tail_err = Check_tail_number(arr.tail_number);
-    if (tail_err) error_code = tail_err; //Запоминаем ошибку
+    if (tail_err && error_code == 0) error_code = tail_err; //Запоминаем ошибку
+
     if (line[pos] == '\0')
     {
         if (error_code != 0)
@@ -284,7 +291,8 @@ int Parse_line(char* line, Aircraft &arr) {
     }
     flight_str[i] = '\0';
     int flight_err = Check_flight_number(flight_str);
-    if (flight_err) error_code = flight_err;
+    if (flight_err && error_code == 0) error_code = flight_err; // Если ещё нет ошибки
+
     arr.flight_number = Number(flight_str); // Извлекаем число (0, если нет цифр)
     if (line[pos] == '\0')
     {
@@ -308,7 +316,7 @@ int Parse_line(char* line, Aircraft &arr) {
     time_str[i] = '\0';
     unsigned int h = 0, m = 0;
     int time_err = Check_time(time_str, h, m);
-    if (time_err) error_code = time_err;
+    if (time_err && error_code == 0) error_code = time_err;
     arr.boarding_hour = h;
     arr.boarding_min = m;
 
@@ -335,11 +343,11 @@ int Check_tail_number(char* num) {
     if ((unsigned char)num[0] == 0xD0 && (unsigned char)num[1] == 0x91)
     // Буква Б - 2 байта
         i = 2;
-    else return 1;
+    else return 4;
 
     if (num[i]!= '-') return 4;
     i++;
-    if (num[i] == '\0') return 4;
+    if (num[i] == '\0' || num[i] == ' ') return 4;
     for (int j = 0; j < len_tail; j++)
     { //Процерка цифровой части
         if (num[i+j] < '0' || num[i+j] > '9') return 4;
@@ -392,7 +400,7 @@ int Number(char *extra_s) {
 }
 
 int Check_time(char* extra_s, unsigned int &hour, unsigned int &min){
-    if (extra_s == nullptr || extra_s[0] == '\0') return 7;
+    if (extra_s == nullptr || extra_s[0] == '\0') return 8;
     int i = 0;
     for (int j = 0; j < 2; j++)
     { // Час не может задаваться одной цифрой
@@ -453,7 +461,7 @@ void Print_message(int code, char* brand) {
             cout << endl;
             break;
         case 7:
-            cout << "Ошибка! Нехватает данных для";
+            cout << "Ошибка! Не хватает данных для";
             if (brand) cout << " ЛА " << brand;
             cout << endl;
             break;
@@ -468,7 +476,7 @@ void Print_message(int code, char* brand) {
             cout << endl;
             break;
         case 10:
-            cout << "Самолеты с одинаковым номером рейса не могут вылетать в одно и то же время";
+            cout << "Самолеты с одинаковым номером рейса не могут совершать посадку в одно и то же время";
             if (brand) cout << " ЛА " << brand;
             cout << endl;
             break;
@@ -526,19 +534,31 @@ int Length_of_number(int num) {
 }
 
 void PrintOriginal(Aircraft *arr, int N) {
-    cout << "------------------------------------------" << endl;
-    cout << "| № | Исходная строка из файла            |" << endl;
-    cout << "------------------------------------------" << endl;
-    for (int i = 0; i < N; i++)
-    {
-        cout << "| " << (i+1);
-        if (i+1 < 10) cout << " ";
-        cout << " | " << arr[i].original_line;
+    int max = 0;
+    for (int i = 0; i < N; i++) {
         int len = strlen(arr[i].original_line);
-        for (int k = len; k < 41; k++) cout << " ";
-        cout << "|" << endl;
+        if (len > max) max = len;
     }
-    cout << "------------------------------------------" << endl;
+    for (int i = 0; i < max; i++) cout << "-";
+    cout << "\n| № | Исходная строка из файла";
+    for (int i = 30; i < max; i++) cout << " ";
+    cout << "|" << endl;
+    for (int i = 0; i < max; i++) cout << "-";
+    cout << endl;
+
+    for (int i = 0; i < N; i++) {
+
+        cout << "| " << (i+1);
+        if (Length_of_number(i+1) == 1) cout << " ";
+        cout << " | ";
+
+        cout << arr[i].original_line;
+
+        int len = Length_of(arr[i].original_line);
+        for (int k = len; k < max; k++) cout << " ";
+        cout << " |" << endl;
+    }
+    for (int i = 0; i < max; i++) cout << "-";
 }
 
 
@@ -581,26 +601,27 @@ void IndexSort(Aircraft *&arr, int N, int *&B){
     int i, j, t = 0;
     for (i = 0; i < N - 1; i++)
     {
-        int ind = i;
+        int ind = i; // Индекс лучшего элемента
         for (j = i + 1; j < N; ++j)
-        {
+        { //Перебор оставшихся позиций
             if (arr[B[j]].flight_number < 0 && arr[B[ind]].flight_number >= 0)
-                ind = j;
+                ind = j; // Самолет в воздухе идет перед самолетом на посадке
             if (arr[B[j]].flight_number >= 0 && arr[B[ind]].flight_number < 0)
                 continue;
             if (arr[B[j]].flight_number < 0 && arr[B[ind]].flight_number < 0) {
                 if (arr[B[j]].flight_number > arr[B[ind]].flight_number)
-                    ind = j;
+                    ind = j; // Убывание номера рейса
             }
             if (arr[B[j]].flight_number >= 0 && arr[B[ind]].flight_number >= 0) {
                 if (arr[B[j]].boarding_hour == arr[B[ind]].boarding_hour) {
                     if (arr[B[j]].boarding_min < arr[B[ind]].boarding_min)
-                        ind = j;
+                        ind = j; // Возрастание времени посадки
                 }
                 if (arr[B[j]].boarding_hour < arr[B[ind]].boarding_hour)
-                    ind = j;
+                    ind = j; // Возрастание времени посадки
             }
         }
+        // Меняем местами индексы
         t = B[i];
         B[i] = B[ind];
         B[ind] = t;
