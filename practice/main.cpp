@@ -351,9 +351,9 @@ int Check_tail_number(char* num) {
 
 int Check_flight_number(char* flight_str) {
     // Первые 4 символа - "РЕЙС"
-    if (flight_str == nullptr || flight_str[0] == '\0') return 1;
+    if (flight_str == nullptr || flight_str[0] == '\0') return 5;
     const unsigned char prefix[] = {0xD0,0xA0, 0xD0,0x95, 0xD0,0x99, 0xD0,0xA1}; // РЕЙС
-    for (int i = 0; i < 8; i++) if ((unsigned char)flight_str[i] != prefix[i]) return 8;
+    for (int i = 0; i < 8; i++) if ((unsigned char)flight_str[i] != prefix[i]) return 5;
 
     // Одна кириллическая буква - 2 символа
     int i = 8;
@@ -363,36 +363,35 @@ int Check_flight_number(char* flight_str) {
     // Считывание цифровой части
     while (flight_str[i] != '\0')
     {
-        if (flight_str[i] < '0' || flight_str[i] > '9') return 8;
-        digit_count++;
+        if (flight_str[i] >= '0' && flight_str[i] <= '9') {
+            digit_count++;
         i++;
+        }
+        else return 5;
     }
     if (digit_count >= 1 && digit_count <= 9) return 0; // Корректный формат
 
-    return 8; // Некорректный формат
+    return 5; // Некорректный формат
 }
 int Number(char *extra_s) {
     int sum = 0;
-    int h = 0;
+    int h = 8;
     bool flag = false; // Флаг положительности/отрицательности числа
-    while (extra_s[h] != '\0'){
-        if (extra_s[h] == '-') //Если перед номером рейса минус
-        {
-            flag = true; // Число отрицательное
-        }
-        else if (extra_s[h] >= '0' && extra_s[h] <= '9') //Если цифра
-        {
-            sum = sum * 10 + (extra_s[h] - '0'); //Формируем номер
-        }
+    if (extra_s[h] == '-') //Если перед номером рейса минус
+    {
+        flag = true; // Число отрицательное
         h++;
     }
-    if (flag == true)
+    while (extra_s[h] >= '0' && extra_s[h] <= '9') //Если цифра
     {
-        sum *= -1;
+        sum = sum * 10 + (extra_s[h] - '0'); //Формируем номер
+        h++;
     }
+    if (flag == true) sum *= -1;
 
     return sum;
 }
+
 
 int Check_time(char* extra_s, unsigned int &hour, unsigned int &min){
     if (extra_s == nullptr || extra_s[0] == '\0') return 7;
